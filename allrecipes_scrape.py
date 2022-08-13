@@ -1,5 +1,6 @@
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
+import pprint
 
 # This will make user input into a search on allrecipes.com
 
@@ -13,20 +14,34 @@ html1 = urlopen('https://www.allrecipes.com/search/results/?search={}'.format(di
 bs = BeautifulSoup(html1.read(), 'html.parser')
 
 nameList = bs.findAll('a', {'class':"card__titleLink manual-link-behavior elementFont__titleLink margin-8-bottom"})
+recipe_links = []
 for name in nameList:
-    recipe_links = [(name.attrs.get('href'))]
-    print(recipe_links)
-
-# This will take the urls generated and iterate through them for scraping
+    recipe_links.append(name.attrs.get('href'))
 
 
-# This portion of the code scrapes one recipe and gets the list of ingredients
-for x in recipe_links:
-    html2 = urlopen(x)
+ingredient_counter = {}
+
+#  This portion of the code scrapes one recipe and gets the list of ingredients
+for recipe_link in recipe_links:
+    html2 = urlopen(recipe_link)
     bs = BeautifulSoup(html2.read(), 'html.parser')
+    print(recipe_link)
 
-    nameList = bs.findAll('input', {'class':"checkbox-list-input"})
-    for name in nameList:
-        if name == None:
+    inputs = bs.findAll('input', {'class':"checkbox-list-input"})
+    for input in inputs:
+        ingredient = input.attrs.get('data-ingredient')
+        if ingredient == None:
             continue
-        print(name.attrs.get('data-ingredient'))
+        ingredient = ingredient.split(",")[0]
+        if ingredient not in ingredient_counter.keys():
+            ingredient_counter.update({ingredient: 1})
+        else:
+            ingredient_counter.update({ingredient: ingredient_counter.get(ingredient)+1})
+        
+sorted_ingredient_counter = dict(sorted(ingredient_counter.items(), key=lambda item: item[1], reverse=True))
+
+print(sorted_ingredient_counter)
+
+
+
+
